@@ -23,10 +23,12 @@ optionWindow.rowconfigure(0, weight=1)
 NumberOfPoints = int(1e5)
 spectrum = np.zeros(NumberOfPoints)
 photonsabsorbed = spectrum
-spectralMode = 'full'#molar
-concentration = 0
+spectralMode = tk.StringVar()
+spectralMode.set(0)
+concentration = .001 #molar
 concentrationString = tk.StringVar()
-wlrange = np.linspace(1,1000,100)
+concentrationString.set(concentration)
+absorbanceValue = tk.StringVar()
 
 #////////////////////////////////////////////////////////////////////////////////////////
 def wlRange(*args):
@@ -39,9 +41,9 @@ def wlRange(*args):
         pass
 
 def wlSingle(*args):
+    global value1
     try:
         value1 = float(wlMin.get())
-        
     except ValueError:
         pass
 
@@ -102,39 +104,49 @@ def spectrumAbsorbance(*args):
 
 
 def singleAbsorbance(*args):
+    global concentration
     global count
     global photonsabsorbed
     global peakfreq
     global freqbw
     global CrossSection
+    global absorbanceValue
+    global value1
+    wlSingle()
     try:
-        wavenumsource = 1/(wlrange/1e7)
-        phosec = (wlrange*intensity)/(h*c) #photons per second per cm**2
+        concentration = float(concentrationString.get())
+        wavenumsource = 1/(value1/1e7)
+        phosec = (value1*intensity)/(h*c) #photons per second per cm**2
         omega = wavenumsource
         gamma = HWHM
-        Concentration = conc
+        Concentration = concentration
         concMolecules = Concentration*6.02e23
         Nmolecule = concMolecules/1000 #molecules per cm^3
         sigmap = CrossSection #cm^2
-        peaknm = wavelength #nm
+        peaknm = absorptionPeak #nm
         peak = peaknm*1e-9 #m
         peakwn = 1/(peaknm*1e-7)
         omegao = peakwn
         sigmaw = (sigmap*gamma**2)/((gamma**2)+((omegao-omega)**2))#normalized to peak area
-        intensitys = intensity*np.exp((-(sigmaw)*path*Nmolecule))
         phosecs = phosec*np.exp((-(sigmaw)*path*Nmolecule)) #photons per second per cm^2 transmitted through 
-        value = np.log10(phosec/phosecs)
-        
+        absorbanceValue.set(np.log10(phosec/phosecs))
     except ValueError:
         pass
 
 
-    
-    
+def enableEntry(*args):
+    wlMax_entry.config(state = 'normal')
+    wlMax_entry.update()
+
+def disableEntry(*args):
+    wlMax_entry.config(state = 'disabled')
+    wlMax_entry.update()
+
 def giveResults(*args):
-    if spectralMode is 'full':
+    test = float(spectralMode.get())
+    if test == 1:
         spectrumAbsorbance(*args)
-    elif spectralMode is 'single':
+    elif test == 0:
         singleAbsorbance(*args)
     else:
         pass
@@ -144,6 +156,9 @@ def giveResults(*args):
 #wavelength setting options//////////////////////////////////////////////////
 wlMin = tk.StringVar()
 wlMax = tk.StringVar()
+
+wlMin.set("300") #default minimum
+wlMax.set("800") #default maximum
 
 wlMin_entry = tk.ttk.Entry(optionWindow, width=7, textvariable=wlMin)
 wlMin_entry.grid(column=2, row=1, sticky=(tk.W, tk.E))
@@ -160,8 +175,8 @@ ttk.Button(optionWindow, text="Set Range", command=wlRange).grid(column=3, row=1
 
 
 # Mode Selection////////////////////////////////////////////////
-ttk.Radiobutton(optionWindow, text="Single Wavelength", variable = spectralMode, value = 'single').grid(column=5, row=5, sticky='w')
-ttk.Radiobutton(optionWindow, text="Full Spectrum", variable = spectralMode, value = 'full').grid(column=5, row=6, sticky='w')
+ttk.Radiobutton(optionWindow, text="Single Wavelength", variable = spectralMode, value = 0, command = disableEntry).grid(column=5, row=5, sticky='w')
+ttk.Radiobutton(optionWindow, text="Full Spectrum", variable = spectralMode, value = 1,command = enableEntry).grid(column=5, row=6, sticky='w')
 #///////////////////////////////////////////////////////////////////////
 
 #User Parameter Input////////////////////////////////////////////////////////////
@@ -171,7 +186,6 @@ concentration_entry.grid(column=2, row=3, sticky=(tk.W, tk.E))
 ttk.Label(optionWindow, text="concentration (M)").grid(column=1, row=3, sticky='w')
 
 #////////////////////////////////////////////////////////////////
-
 
 
 
@@ -203,8 +217,10 @@ c = 3e8 #m/s
 #/////////////////////////////////////////////////
 
 
-# ANSWER OUTPUT////////////////////////////////////////////////////
-#ttk.Label(optionWindow, textvariable=absorbance).grid(column=4, row=6, sticky=tk.W)
+#ANSWER OUTPUT////////////////////////////////////////////////////
+ttk.Label(optionWindow, textvariable=absorbanceValue).grid(column=4, row=4, sticky=tk.W)
+
+
 
 #/////////////////////////////////////////////////////////////////////
 
