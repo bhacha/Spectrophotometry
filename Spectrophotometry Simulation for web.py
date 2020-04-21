@@ -1,12 +1,13 @@
-!conda clean --tarballs
-!conda clean --packages
+
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
+matplotlib.use('Agg')
 # Implement the default Matplotlib key bindings.
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
+from matplotlib import pyplot as plt
 import numpy as np
 
 
